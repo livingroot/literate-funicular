@@ -14,7 +14,7 @@ class orders{
 	 * @param int $ticket_adult_quantity - кол-во взрослых билетов
 	 * @param int $ticket_kid_price - цена детских билетов
 	 * @param int $ticket_kid_quantity - кол-во детских билетов
-	 * @return string|bool - 12значный баркод в случае успеха
+	 * @return string|bool - баркод в случае успеха
 	*/
 	public static function create(int $event_id, string $event_date, int $ticket_adult_price, int $ticket_adult_quantity, int $ticket_kid_price, int $ticket_kid_quantity){
 		global $db;
@@ -76,7 +76,7 @@ class orders{
 					)
 				");
 
-				if($ins_event){
+				if(!$ins_event){
 					throw new Exception("Ошибка БД",5);
 				}
 
