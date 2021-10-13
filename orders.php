@@ -1,6 +1,5 @@
 <?php
-
-$db = new mysqli("localhost","root","","test");
+require_once("./db.php");
 
 class orders{
 	const api_url = "https://api.site.com";
@@ -17,7 +16,7 @@ class orders{
 	 * @return string|bool - баркод в случае успеха
 	*/
 	public static function create(int $event_id, string $event_date, int $ticket_adult_price, int $ticket_adult_quantity, int $ticket_kid_price, int $ticket_kid_quantity){
-		global $db;
+		$db = new dbc("localhost","root","","test");
 
 		$barcode = self::generateCode(16); // длинну бы уточнить
 
@@ -44,8 +43,10 @@ class orders{
 			if(isset($approveres->message)){
 				$equal_price = $ticket_adult_price + $ticket_kid_price;
 				$userid = 0; // а какой? 
-				$event_date_esc = $db->real_escape_string($event_date);
-				
+				if(!preg_match("/\d{4}\-\d{2}\-\d{2}\s\d{2}\:\d{2}\:\d{2}/", $event_date)){
+					throw new Exception("Неверная дата", 6);
+				}
+
 				$ins_event = $db->query("INSERT INTO `events`
 					(
 						`id`
@@ -64,7 +65,7 @@ class orders{
 					(
 						null,
 						'".$event_id."',
-						'".$event_date_esc."',
+						'".$event_date."',
 						'".$ticket_adult_price."',
 						'".$ticket_adult_quantity."',
 						'".$ticket_kid_price."',
@@ -115,6 +116,21 @@ class orders{
 	}
 
 	private static function httpPost($url, $data){
+		if(defined("TESTENV")){
+			if($url == self::api_url."/book"){
+				return "{\"message\": \"order successfully booked\"}";
+			} else if($url == self::api_url."/approve"){
+				$answers = [
+					"{\"error\": \"event cancelled\"}",
+					"{\"error\": \"no tickets\"}", 
+					"{\"error\": \"no seats\"}",
+					"{\"error\": \"fan removed\"}",
+					"{\"message\": \"ok\"}"
+				];
+				return $answers[rand(0,count($answers)-1)];
+			}
+		}
+		
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
